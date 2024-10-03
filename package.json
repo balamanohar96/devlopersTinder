@@ -1,0 +1,22 @@
+{
+  "dependencies": {
+    "express": "^4.21.0",
+    "mongodb": "^6.9.0"
+  },
+  "name": "namaste_node",
+  "version": "1.0.0",
+  "description": "learning nodejs from akshay sir",
+  "main": "xyz.js",
+  "devDependencies": {},
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [
+    "nodejs",
+    "java",
+    "script"
+  ],
+  "author": "bala manohar",
+  "license": "ISC"
+}
