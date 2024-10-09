@@ -1,5 +1,25 @@
 const express = require("express");
+const adminAuth = require("./middleware/auth");
+const connectDB = require("./config/database");
+const UserCollectionModel = require("./models/user");
 const app = express();
+
+app.post("/signup", async (req, res) => {
+  const newUserInfo = {
+    age: 4,
+    firstName: "sai",
+    emailID: "sai@gmail.com",
+    mobile: 76545456,
+  };
+  const newDocument = new UserCollectionModel(newUserInfo);
+
+  try {
+    await newDocument.save();
+    res.send("user created successfully");
+  } catch (err) {
+    res.status(500).send("connection to database failed");
+  }
+});
 
 app.get("/user/:id", (req, res) => {
   console.log(req.params);
@@ -15,8 +35,6 @@ app.get("/user", (req, res) => {
   }
 });
 
-const adminAuth = require("../middleware/auth");
-
 app.get("/admin", adminAuth, (req, res) => {
   res.send("admin");
 });
@@ -31,6 +49,13 @@ app.use("/", (err, req, res, next) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("server started at 3000");
-});
+connectDB()
+  .then(() => {
+    console.log("DB connected");
+    app.listen(3000, () => {
+      console.log("server started at 3000");
+    });
+  })
+  .catch((err) => {
+    console.log(err);
+  });
