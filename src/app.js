@@ -4,6 +4,11 @@ const connectDB = require("./config/database");
 const UserCollectionModel = require("./models/user");
 const app = express();
 app.use(express.json());
+const {
+  validateNewUser,
+  validateUserCredentials,
+} = require("./utils/validateUserInfo");
+const bcrypt = require("bcrypt");
 
 app.get("/feed", async (req, res) => {
   try {
@@ -29,14 +34,56 @@ app.get("/user", async (req, res) => {
 
 app.post("/signup", async (req, res) => {
   const newUserInfo = req.body;
+  const {
+    password,
+    emailId,
+    firstName,
+    lastName,
+    gender,
+    age,
+    about,
+    mobile,
+    skills,
+  } = newUserInfo;
   try {
-    const newDocument = new UserCollectionModel(newUserInfo);
+    validateNewUser(newUserInfo);
+    const passwordHash = await bcrypt.hash(password, 10);
+    const newDocument = new UserCollectionModel({
+      emailID: emailId,
+      password: passwordHash,
+      firstName,
+      lastName,
+      gender,
+      age,
+      about,
+      mobile,
+      skills,
+    });
     await newDocument.save();
     res.send("user created successfully");
   } catch (err) {
-    res
-      .status(500)
-      .send("something went wrong while creating a new user. " + err.message);
+    res.status(500).send("ERR. " + err.message);
+  }
+});
+
+app.post("/login", async (req, res) => {
+  const userCredentials = req.body;
+  try {
+    const { password, emailId } = userCredentials;
+    validateUserCredentials(userCredentials);
+    const user = await UserCollectionModel.findOne({ emailID: emailId });
+    console.log(user);
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    console.log(isPasswordCorrect);
+    if (!isPasswordCorrect) {
+      throw new Error("Invalid credentials");
+    }
+    res.send("login successful");
+  } catch (err) {
+    res.status(500).send("ERR. " + err.message);
   }
 });
 
