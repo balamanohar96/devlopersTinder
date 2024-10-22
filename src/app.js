@@ -1,37 +1,19 @@
 const express = require("express");
-const adminAuth = require("./middleware/auth");
 const connectDB = require("./config/database");
 const UserCollectionModel = require("./models/user");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 const app = express();
-app.use(express.json());
 const {
   validateNewUser,
   validateUserCredentials,
 } = require("./utils/validateUserInfo");
-const bcrypt = require("bcrypt");
+app.use(express.json());
+app.use(cookieParser());
+const { userAuth } = require("./middleware/auth");
 
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await UserCollectionModel.find({});
-    res.send(users);
-  } catch (err) {
-    res.status(500).send("Cannot get feed data " + err.message);
-  }
-});
-
-app.get("/user", async (req, res) => {
-  const firstName = req.body.firstName;
-  try {
-    if (!firstName) {
-      throw new Error("Please enter firstName");
-    }
-    const users = await UserCollectionModel.find({ firstName: firstName });
-    res.send(users);
-  } catch (err) {
-    res.status(500).send("Cannot get user data. " + err.message);
-  }
-});
-
+// Signup API
 app.post("/signup", async (req, res) => {
   const newUserInfo = req.body;
   const {
@@ -66,27 +48,73 @@ app.post("/signup", async (req, res) => {
   }
 });
 
+// Login API
 app.post("/login", async (req, res) => {
   const userCredentials = req.body;
   try {
     const { password, emailId } = userCredentials;
     validateUserCredentials(userCredentials);
+
     const user = await UserCollectionModel.findOne({ emailID: emailId });
-    console.log(user);
     if (!user) {
       throw new Error("Invalid credentials");
     }
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
-    console.log(isPasswordCorrect);
+
+    const isPasswordCorrect = await user.comparePassword(password);
     if (!isPasswordCorrect) {
       throw new Error("Invalid credentials");
     }
-    res.send("login successful");
+
+    const token = await user.getJWT();
+    res.cookie("token", token);
+    res.send("login successful ");
   } catch (err) {
     res.status(500).send("ERR. " + err.message);
   }
 });
 
+// Profile API
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    res.send(user);
+  } catch (err) {
+    res.status(500).send("ERR. " + err.message);
+  }
+});
+
+// Send connection request API
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  const user = req.user;
+  res.send(user.firstName + " sent request");
+});
+
+// feed API - get all the users
+app.get("/feed", userAuth, async (req, res) => {
+  try {
+    const users = await UserCollectionModel.find({});
+    res.send(users);
+  } catch (err) {
+    res.status(500).send("Cannot get feed data " + err.message);
+  }
+});
+
+// get user by emailId
+app.get("/user", async (req, res) => {
+  const emailId = req.body.emailId;
+  try {
+    if (!emailId) {
+      throw new Error("Please enter emailID");
+    }
+    validateUserCredentials({ emailId });
+    const user = await UserCollectionModel.find({ emailID: emailId });
+    res.send(user);
+  } catch (err) {
+    res.status(500).send("Cannot get user data. " + err.message);
+  }
+});
+
+// nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
 app.patch("/user/:userID", async (req, res) => {
   const reqObj = req.body;
   const userId = req.params.userID;
@@ -115,23 +143,6 @@ app.patch("/user/:userID", async (req, res) => {
   }
 });
 
-app.get("/bala/:id", (req, res) => {
-  console.log(req.params);
-  res.send({ id: req.params.id, city: "guntur" });
-});
-
-app.get("/bala", (req, res) => {
-  if (req.query?.brand) {
-    res.send({ firstName: "bala", lastName: "manohar", laptop: req.query });
-  } else {
-    res.send([{ firstName: "bala", lastName: "manohar" }]);
-  }
-});
-
-app.get("/admin", adminAuth, (req, res) => {
-  res.send("admin");
-});
-
 app.use("/", (err, req, res, next) => {
   if (err) {
     res.status(500).send("something went wrong");
@@ -140,7 +151,6 @@ app.use("/", (err, req, res, next) => {
 
 connectDB()
   .then(() => {
-    console.log("DB connected");
     app.listen(3000, () => {
       console.log("server started at 3000");
     });

@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
 
 const userCollectionSchema = new mongoose.Schema(
   {
@@ -86,8 +88,23 @@ const userCollectionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+userCollectionSchema.methods.getJWT = async function () {
+  const user = this;
+  const token = await jwt.sign({ userId: user._id }, "DEVTINDER@96", {
+    expiresIn: "7d",
+  });
+  return token;
+};
+
+userCollectionSchema.methods.comparePassword = async function (userPassword) {
+  const user = this;
+  const hashPassword = user.password;
+  const isPasswordCorrect = await bcrypt.compare(userPassword, hashPassword);
+  return isPasswordCorrect;
+};
+
 const UserCollectionModel = mongoose.model("user", userCollectionSchema);
-//  !                      "collection name" (No caps) (singular pronounce)
-//  In MongoDB the collection names are plural pronounced automatically. => "s" is added to given collection name.
+//  !                                 "collection name" => (lowerCase, Singular pronounce)
+// ! In MongoDB the collection names are plural pronounced automatically. => "s" is added to given collection name.
 
 module.exports = UserCollectionModel;

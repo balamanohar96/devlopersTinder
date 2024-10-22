@@ -12,11 +12,9 @@ const validateNewUser = (reqBody) => {
 };
 
 const validateUserCredentials = (reqBody) => {
-  const { password, emailId } = reqBody;
+  const { emailId } = reqBody;
   if (!validator.isEmail(emailId)) {
     throw new Error("Email-Id is not valid");
-  } else if (!validator.isStrongPassword(password)) {
-    throw new Error("password is not strong");
   }
 };
 
