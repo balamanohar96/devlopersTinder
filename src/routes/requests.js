@@ -4,7 +4,7 @@ const ConnectionModel = require("../models/connections");
 const UserModel = require("../models/user");
 const router = express.Router();
 
-// Send connection request API
+//! Send connection request API
 router.post("/request/send/:status/:toUserId", userAuth, async (req, res) => {
   try {
     const user = req.user;
@@ -24,8 +24,8 @@ router.post("/request/send/:status/:toUserId", userAuth, async (req, res) => {
       return res.status(400).send("invalid userID");
     }
     //check4
-    const genuineId = await UserModel.findById(toUserId);
-    if (!genuineId) {
+    const toUser = await UserModel.findById(toUserId);
+    if (!toUser) {
       return res.status(400).send("user Id is incorrect");
     }
 
@@ -45,9 +45,11 @@ router.post("/request/send/:status/:toUserId", userAuth, async (req, res) => {
       toUserId,
       status,
     });
+
     const data = await newDocument.save();
+
     res.json({
-      message: `You have sent ${status} connection`,
+      message: `${user.firstName} have sent ${status}-connection to ${toUser.firstName}`,
       data,
     });
   } catch (err) {
@@ -55,7 +57,7 @@ router.post("/request/send/:status/:toUserId", userAuth, async (req, res) => {
   }
 });
 
-// Review a pending connection request
+//! Review a pending connection request
 router.post(
   "/request/review/:status/:requestId",
   userAuth,
@@ -94,7 +96,8 @@ router.post(
 
       existingDocument.status = status;
       const data = await existingDocument.save();
-      res.json({ message: "connection request accepted successfully", data });
+
+      res.json({ message: `connection request ${status} successfully`, data });
     } catch (error) {
       res.status(500).send("Err. " + error.message);
     }

@@ -69,6 +69,11 @@ const userCollectionSchema = new mongoose.Schema(
         if (arr.length > 10) {
           throw new Error("Cannot add more than 10 skills");
         }
+        for (let i = 0; i < arr.length; i++) {
+          if (arr[i].length > 30) {
+            throw new Error("Skill name should be less than 30 characters");
+          }
+        }
       },
     },
     mobile: {
@@ -81,7 +86,7 @@ const userCollectionSchema = new mongoose.Schema(
     },
     about: {
       type: String,
-      maxLength: 30,
+      maxLength: 50,
       trim: true,
     },
   },
