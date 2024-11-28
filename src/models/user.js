@@ -50,7 +50,7 @@ const userCollectionSchema = new mongoose.Schema(
       max: 120,
     },
     gender: {
-      type: String, 
+      type: String,
       required: true,
       lowercase: true,
       trim: true,
@@ -104,7 +104,7 @@ userCollectionSchema.methods.comparePassword = async function (userPassword) {
 };
 
 const UserModel = mongoose.model("user", userCollectionSchema);
-//  !                                 "collection name" => (lowerCase, Singular pronounce)
+//  !                       "collection name" => (lowerCase, Singular pronounce)
 // ! In MongoDB the collection names are plural pronounced automatically. => "s" is added to given collection name.
 
 module.exports = UserModel;
